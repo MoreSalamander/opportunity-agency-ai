@@ -1,0 +1,14 @@
+{
+  "crypto_hunter": {
+    "title": "Crypto Hunter AI",
+    "repo": "~/MoreSalamander/crypto-hunter"
+  },
+  "collectible_hunter": {
+    "title": "Collectible Hunter AI",
+    "repo": "~/MoreSalamander/collectible-hunter"
+  },
+  "free_money_hunter": {
+    "title": "Free Money Hunter AI",
+    "repo": "~/MoreSalamander/free-money-hunter"
+  }
+}

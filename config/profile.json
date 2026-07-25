@@ -1,0 +1,8 @@
+{
+  "owner": "0ne29",
+  "daily_time_minutes": 90,
+  "daily_budget_usd": 150,
+  "min_total_score": 30,
+  "max_allocation_items": 5,
+  "notes": "One shared budget across every Hunter engine — this is deliberately smaller than the sum of each engine's own per-domain budget (crypto $15 + collectible $200 + free-money $0), since the whole point of Opportunity is that they compete for the same real hours and dollars, not each get their own."
+}
