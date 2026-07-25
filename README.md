@@ -62,9 +62,9 @@ stack, not a product; Hunter engines and Opportunity are what get built with it.
 | Engine | Status |
 |---|---|
 | Crypto Hunter AI | Shipped — the reference implementation |
-| Collectible Hunter AI | Building |
-| Free Money / Unclaimed-Benefits Hunter AI | Building |
-| Grant Hunter AI, Scholarship Hunter AI | Planned — cheap to add once Opportunity exists |
+| Collectible Hunter AI | Shipped — comp-arbitrage gate, live-validated |
+| Free Money / Unclaimed-Benefits Hunter AI | Shipped — registry gate, live-validated end to end |
+| Grant Hunter AI, Scholarship Hunter AI | Planned — cheap to add, no urgency |
 | Vehicle, Developer/Bounty, Government Opportunity Hunter AI | Planned |
 | Stock Hunter AI | Planned — advice-liability posture needs its own care |
 | Property Hunter AI (foreclosures) | Flagship vision, deliberately deferred — real data-access headwinds (MLS licensing, county-level fragmentation) |
@@ -72,11 +72,17 @@ stack, not a product; Hunter engines and Opportunity are what get built with it.
 
 ## Status
 
-Proof-of-concept phase: Collectible Hunter AI and Free Money Hunter AI are being built
-first as maximally-different inputs (comp-arbitrage gate vs. registry-lookup gate), then
-Opportunity's gather/weigh/learn layer gets built as its own dedicated phase against all
-three engines (crypto + the two new ones). Remaining Hunter engines are added after —
-they're cheap once the pattern's proven twice more.
+Both Collectible Hunter AI and Free Money Hunter AI shipped and were live-validated
+against real APIs. Opportunity's own meta-layer (v1, deterministic) is live: read-only
+bridges into all three engines' DataHubs, a shared-budget cross-engine allocation
+algorithm, its own keystone record and store. First live run merged 18 real Crypto
+Hunter AI opportunities with 5 real Free Money Hunter AI ones into a genuine mixed
+cross-domain allocation.
+
+**Not yet built**: the LLM-driven cross-org debate — arguing *priority* across engines,
+not truth — which is the genuinely novel piece of this whole vision. v1 is pure
+deterministic greedy allocation, proving the bridge+arbitration mechanism works before
+a debate layer goes on top of it.
 
 ---
 
