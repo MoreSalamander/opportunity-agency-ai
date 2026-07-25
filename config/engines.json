@@ -1,14 +1,17 @@
 {
   "crypto_hunter": {
     "title": "Crypto Hunter AI",
-    "repo": "~/MoreSalamander/crypto-hunter"
+    "repo": "~/MoreSalamander/crypto-hunter",
+    "color": "ffb454"
   },
   "collectible_hunter": {
     "title": "Collectible Hunter AI",
-    "repo": "~/MoreSalamander/collectible-hunter"
+    "repo": "~/MoreSalamander/collectible-hunter",
+    "color": "d4af37"
   },
   "free_money_hunter": {
     "title": "Free Money Hunter AI",
-    "repo": "~/MoreSalamander/free-money-hunter"
+    "repo": "~/MoreSalamander/free-money-hunter",
+    "color": "4ade80"
   }
 }

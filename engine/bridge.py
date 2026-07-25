@@ -85,3 +85,40 @@ def gather_all(engines_config: dict) -> dict[str, list[BridgedOpportunity]]:
         name: read_verified(name, cfg["repo"])
         for name, cfg in engines_config.items()
     }
+
+
+def read_ledger(repo: str) -> dict:
+    """One engine's own earned/spent, via hunter_engine's own DataHub — this
+    is shared framework code every engine is built on, not a domain-specific
+    import, so reusing it here doesn't break the bridge's isolation the way
+    importing a domain's own OpportunitySpec subclass would."""
+    from hunter_engine.store import DataHub
+
+    db_path = _datahub_path(repo)
+    if not db_path.exists():
+        return {"earned": 0.0, "spent": 0.0}
+    hub = DataHub(db_path)
+    try:
+        return {"earned": hub.earned_total(), "spent": hub.usage_totals()["cost_usd_est"]}
+    finally:
+        hub.close()
+
+
+def read_counts(repo: str) -> dict:
+    """One engine's verified/rejected/candidate counts, for a per-engine
+    rollup — same read-only DataHub, no domain-specific spec needed since
+    counting only touches trust_status, not any domain field."""
+    db_path = _datahub_path(repo)
+    if not db_path.exists():
+        return {"verified": 0, "rejected": 0, "candidates": 0}
+    conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+    try:
+        counts = {}
+        for status in ("verified", "rejected", "candidate"):
+            row = conn.execute(
+                "SELECT COUNT(*) FROM opportunities WHERE trust_status = ?", (status,)
+            ).fetchone()
+            counts["candidates" if status == "candidate" else status] = row[0]
+        return counts
+    finally:
+        conn.close()
