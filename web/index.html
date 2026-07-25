@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Opportunity [Agency AI]</title>
+<style>
+  :root {
+    --bg:#0a0e14; --panel:#111722; --line:#1e2733; --ink:#e6edf3;
+    --dim:#8b98a9; --acc:#f472b6; --green:#34d399;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace; --sans:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;} body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.6;}
+  a{color:var(--acc);}
+  .wrap{max-width:960px;margin:0 auto;padding:40px 22px 100px;}
+  header{margin-bottom:28px;}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--acc);margin-bottom:10px;}
+  h1{font-size:32px;margin:0 0 8px;}
+  .sub{color:var(--dim);font-size:15px;}
+  .stats{display:flex;gap:14px;margin:22px 0;flex-wrap:wrap;}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 18px;font-family:var(--mono);}
+  .stat b{font-size:20px;display:block;color:var(--acc);}
+  .stat span{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;}
+  h2{font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin:40px 0 12px;border-bottom:1px solid var(--line);padding-bottom:8px;}
+  .item{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:10px;}
+  .item b{color:var(--acc);}
+  .item .eng{font-family:var(--mono);font-size:11px;color:var(--dim);text-transform:uppercase;}
+  .skipped{font-family:var(--mono);font-size:12.5px;color:var(--dim);}
+  .skipped .row{padding:5px 0;border-bottom:1px solid var(--line);}
+  .empty{color:var(--dim);font-style:italic;}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="kicker">Opportunity [Agency AI]</div>
+  <h1>Today's cross-engine allocation</h1>
+  <div class="sub">Each engine's own gate already decided truth. This decides priority — one shared budget, competing legitimate claims on it.</div>
+</header>
+
+<div class="stats" id="stats"></div>
+
+<h2>Picked today</h2>
+<div id="items"></div>
+
+<h2>Left out</h2>
+<div class="skipped" id="skipped"></div>
+
+<script>
+async function j(url){ const r = await fetch(url); return r.json(); }
+
+async function load(){
+  const s = await j('/api/status');
+  const titles = Object.fromEntries(s.engines.map(e => [e.name, e.title]));
+  const latest = s.latest;
+
+  document.getElementById('stats').innerHTML = `
+    <div class="stat"><b>${s.engines.length}</b><span>engines consulted</span></div>
+    <div class="stat"><b>${latest ? latest.items.length : 0}</b><span>picked</span></div>
+    <div class="stat"><b>${latest ? latest.skipped.length : 0}</b><span>left out</span></div>
+    <div class="stat"><b>$${s.profile.daily_budget_usd}</b><span>shared daily budget</span></div>
+  `;
+
+  const itemsEl = document.getElementById('items');
+  if (!latest || latest.items.length === 0) {
+    itemsEl.innerHTML = '<div class="empty">No allocation yet — run `python cli.py day`.</div>';
+  } else {
+    itemsEl.innerHTML = latest.items.map(it => `
+      <div class="item">
+        <div class="eng">${titles[it.engine] || it.engine}</div>
+        <b>${it.name}</b> (${it.type}) — score ${it.score_total}/90 · ~${it.time_minutes_est} min · $${it.cost_usd_est}
+        ${it.source_url ? `<br><a href="${it.source_url}" target="_blank">verify at source</a>` : ''}
+      </div>`).join('');
+  }
+
+  const skippedEl = document.getElementById('skipped');
+  if (!latest || latest.skipped.length === 0) {
+    skippedEl.innerHTML = '<div class="empty">Nothing left out.</div>';
+  } else {
+    skippedEl.innerHTML = latest.skipped.map(sk => `
+      <div class="row">${sk.name} (${titles[sk.engine] || sk.engine}) — ${sk.reason}</div>`).join('');
+  }
+}
+load();
+</script>
+</div>
+</body>
+</html>

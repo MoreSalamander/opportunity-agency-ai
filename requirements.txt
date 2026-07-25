@@ -1,2 +1,4 @@
 pydantic>=2.13
 pytest>=8.0
+fastapi
+uvicorn
