@@ -1,0 +1,141 @@
+/*
+ * entropy-theme.css — the shared MoreSalamander StudioLabs house style.
+ *
+ * Merged from two visual languages that had organically converged on their
+ * own: the Hunter-engine/Opportunity family (--void/--bone palette, Space
+ * Grotesk + IBM Plex Mono, WebGL hero scenes, glass panels, accordions) and
+ * Veritas's own gold-verdict system (--gold for "verified/truth", --proposal
+ * for "the model's claim, not yet verified" — a distinction unique to
+ * Veritas and worth keeping). See README.md in this repo for the full
+ * rationale behind each merge decision.
+ *
+ * --gold is now the Entropy-wide trust signal, not Veritas-only: every
+ * production's own "verified" states (badges, gate ledgers, pass/pulse
+ * states) use it. Each production keeps its own --signal brand accent for
+ * everything that isn't specifically about trust.
+ *
+ * This file has no build step and no external dependency beyond the two
+ * Google Fonts below — it is meant to be vendored as a literal copy into
+ * each production's own static/web directory (no cross-repo package system
+ * exists here), with this repo as the one canonical source to re-copy from.
+ */
+
+:root {
+  /* base — void/bone, the majority convention across the catalog */
+  --void: #0a0e0c;
+  --bone: #ece7d8;
+  --dim: #7f8c84;
+  --faint: #465049;
+  --line: rgba(35, 48, 41, 0.7);
+  --line-soft: rgba(35, 48, 41, 0.4);
+
+  /* trust — the Entropy-wide verified/truth signal, and Veritas's own identity */
+  --gold: #e8c468;
+  --gold-ink: #1c1606; /* text-on-gold, for solid gold buttons/fills */
+  --proposal: #8b96ad; /* the model's claim, not yet verified — Veritas's own contribution */
+
+  /* state, distinct from gold's specific "verified" meaning */
+  --threat: #ff5c49;
+  --safe: #77e0b0;
+  --amber: #d9a441; /* soft warnings, non-blocking flags */
+
+  /* type */
+  --disp: 'Space Grotesk', sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--void);
+  color: var(--bone);
+  font-family: var(--mono);
+  font-size: 14px;
+  line-height: 1.5;
+}
+h1, h2, h3, h4, .disp { font-family: var(--disp); }
+code, .mono { font-family: var(--mono); }
+code { color: var(--gold); }
+
+/* --- glass panel: the shared overlay treatment over any hero/WebGL scene --- */
+.eg-panel {
+  background: rgba(10, 14, 12, 0.5);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  border: 1px solid var(--line);
+  padding: 20px;
+}
+
+/* --- flat panel/card: the shared surface for ordinary (non-hero) content --- */
+.eg-surface {
+  background: #121317;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px 18px;
+}
+.eg-card {
+  background: rgba(10, 14, 12, 0.62);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--c, var(--gold));
+  padding: 13px 16px;
+}
+.eg-card h4 { font-weight: 500; font-size: 15px; margin: 0 0 8px; }
+
+/* --- badges: gold means verified, everywhere, always --- */
+.eg-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid;
+  display: inline-block;
+}
+.eg-badge.verified, .eg-badge.picked { color: var(--gold); border-color: var(--gold); }
+.eg-badge.rejected { color: var(--threat); border-color: var(--threat); }
+.eg-badge.candidate, .eg-badge.left-out { color: var(--dim); border-color: var(--faint); }
+
+/* --- accordion sections, from the Hunter family --- */
+.eg-sec { border-bottom: 1px solid var(--line-soft); }
+.eg-sec > .hd { cursor: pointer; display: flex; align-items: baseline; gap: 14px; padding: 18px 2px; }
+.eg-sec > .hd h2 { font-weight: 500; font-size: 17px; margin: 0; letter-spacing: 0.02em; }
+.eg-sec > .hd .sub { font-size: 11px; color: var(--dim); letter-spacing: 0.18em; text-transform: uppercase; margin: 0; }
+.eg-sec > .hd .cnt { margin-left: auto; color: var(--faint); font-size: 11px; letter-spacing: 0.08em; }
+.eg-sec > .hd .chev { color: var(--dim); transition: transform 0.2s; font-size: 12px; }
+.eg-sec.open > .hd .chev { transform: rotate(90deg); }
+.eg-sec > .body { display: none; padding: 4px 2px 26px; }
+.eg-sec.open > .body { display: block; }
+
+/* --- the gate ledger / verdict trace: Veritas's own contribution to the shared vocabulary --- */
+.eg-gates { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.eg-gate { padding: 9px 12px; border-bottom: 1px solid var(--line); font-family: var(--mono); font-size: 12.5px; }
+.eg-gate:last-child { border-bottom: 0; }
+.eg-gate.hard { background: rgba(232, 196, 104, 0.035); }
+.eg-gate.soft { opacity: 0.62; }
+.eg-gate.finalauth { border-top: 2px solid var(--line); background: rgba(232, 196, 104, 0.06); }
+.eg-verdict { font-size: 17px; font-weight: 800; margin: 12px 0 14px; letter-spacing: 0.5px; }
+.eg-verdict.shipped { color: var(--gold); }
+.eg-verdict.rejected { color: var(--threat); }
+
+/* --- buttons --- */
+button {
+  background: var(--gold);
+  color: var(--gold-ink);
+  border: 0;
+  padding: 12px 18px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--disp);
+}
+button:disabled { opacity: 0.5; cursor: wait; }
+button.ghost { background: transparent; color: var(--dim); border: 1px solid var(--line); font-weight: 600; }
+button.ghost:hover { color: var(--bone); border-color: var(--gold); }
+
+/* --- live pulse, shared by every "this is live" indicator across the catalog --- */
+@keyframes eg-beat { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+.eg-pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--safe); animation: eg-beat 1.9s infinite; }
+.eg-pulse.gold { background: var(--gold); }
+
+.eg-muted { color: var(--dim); font-size: 12.5px; }
+.eg-empty { color: var(--dim); font-style: italic; font-size: 13px; }

@@ -7,13 +7,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- entropy-theme.css (vendored from ~/MoreSalamander/entropy-shell) supplies the shared
+     :root tokens (--void/--bone/--dim/--faint/--threat/--safe/--disp/--mono), box-sizing,
+     and the base body rule — this file only defines --signal (Opportunity's own brand
+     accent) and its own layout-specific classes on top of that shared base. -->
+<link rel="stylesheet" href="/shared/entropy-theme.css">
 <style>
-:root{--void:#0a0e0c;--bone:#ece7d8;--dim:#7f8c84;--faint:#465049;
---signal:#f472b6;--threat:#ff5c49;--safe:#77e0b0;
---disp:'Space Grotesk',sans-serif;--mono:'IBM Plex Mono',monospace}
-*{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{margin:0;background:var(--void);color:var(--bone);font-family:var(--mono);font-size:14px;line-height:1.5}
+:root{--signal:#f472b6}
 .herowrap{position:relative;height:100vh;min-height:660px;overflow:hidden}
 #scene{position:absolute;inset:0;z-index:0}
 .vig{position:absolute;inset:0;z-index:1;pointer-events:none;

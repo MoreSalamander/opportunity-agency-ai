@@ -12,6 +12,7 @@ from typing import Any
 
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from cli import DB_PATH, ENGINES_PATH, load_profile
 from engine.bridge import gather_all, load_engine_config, read_counts, read_ledger
@@ -21,6 +22,7 @@ ROOT = Path(__file__).resolve().parent
 WEB = ROOT / "web"
 
 app = FastAPI(title="Opportunity [Agency AI]")
+app.mount("/shared", StaticFiles(directory=WEB / "shared"), name="shared")
 
 
 @app.get("/")
