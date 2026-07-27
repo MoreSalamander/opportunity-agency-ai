@@ -10,11 +10,13 @@ left-out list, reproducible from the same inputs.
 
 from __future__ import annotations
 
+from typing import Any
+
 from .allocation import AllocationItem, AllocationRecord, BridgedOpportunity, SkippedItem
 
 
 def build_allocation(
-    gathered: dict[str, list[BridgedOpportunity]], profile: dict
+    gathered: dict[str, list[BridgedOpportunity]], profile: dict[str, Any]
 ) -> AllocationRecord:
     """Deterministic cross-engine allocation. Greedy by score_total within a
     single shared time/money budget — the same algorithm every individual

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
@@ -23,12 +24,12 @@ app = FastAPI(title="Opportunity [Agency AI]")
 
 
 @app.get("/")
-def index():
+def index() -> FileResponse:
     return FileResponse(WEB / "index.html")
 
 
 @app.get("/api/status")
-def status():
+def status() -> dict[str, Any]:
     """The agency-wide ledger: sum of every engine's own earned/spent. Not
     Opportunity's own spend (it makes no LLM calls yet in v1) — the honest
     question here is whether the WHOLE agency is worth running."""
@@ -39,8 +40,19 @@ def status():
         engines = []
         earned = spent = 0.0
         for name, cfg in engines_cfg.items():
-            ledger = read_ledger(cfg["repo"])
-            counts = read_counts(cfg["repo"])
+            # Per-engine isolation: read_ledger/read_counts already degrade
+            # gracefully on their own most-likely failure (schema mismatch),
+            # but this still guards the whole endpoint against anything else
+            # going wrong for just one engine (a locked file, a permissions
+            # error) — without it, one bad engine 500s the dashboard for
+            # every other engine too.
+            try:
+                ledger = read_ledger(cfg["repo"])
+                counts = read_counts(cfg["repo"])
+            except Exception as exc:
+                print(f"[app] failed to read status for engine {name!r}: {exc}")
+                ledger = {"earned": 0.0, "spent": 0.0}
+                counts = {"verified": 0, "rejected": 0, "candidates": 0}
             earned += ledger["earned"]
             spent += ledger["spent"]
             engines.append({
@@ -58,7 +70,7 @@ def status():
 
 
 @app.get("/api/scanfield")
-def scanfield():
+def scanfield() -> dict[str, Any]:
     """The agency's coverage as a graph: Opportunity at the center, each
     Hunter engine as its own node (in its own brand color), and every
     verified opportunity across every engine on the outer shell — the ones
@@ -89,7 +101,7 @@ def scanfield():
 
 
 @app.get("/api/tonight")
-def tonight():
+def tonight() -> dict[str, Any]:
     """Today's allocation as structured data — the cross-engine equivalent
     of a single engine's own Tonight's Orders."""
     hub = OpportunityHub(DB_PATH)
@@ -124,7 +136,7 @@ def tonight():
 
 
 @app.get("/api/leads")
-def leads():
+def leads() -> list[dict[str, Any]]:
     """Every verified opportunity across every engine — the cross-engine
     equivalent of a single engine's own "every lead" list. All of these
     already passed their own engine's gate; what's shown here is only
@@ -154,7 +166,7 @@ def leads():
 
 
 @app.get("/api/skipped")
-def skipped():
+def skipped() -> list[dict[str, Any]]:
     """Today's left-out items and why — the cross-engine equivalent of a
     single engine's rejected list, except nothing here failed a gate; it
     lost on priority against the shared budget."""

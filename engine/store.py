@@ -12,6 +12,7 @@ from __future__ import annotations
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 from .allocation import AllocationRecord
 
@@ -60,7 +61,7 @@ class OpportunityHub:
         )
         self._conn.commit()
 
-    def activity(self, limit: int = 60) -> list[dict]:
+    def activity(self, limit: int = 60) -> list[dict[str, Any]]:
         rows = self._conn.execute(
             "SELECT at, actor, action, detail FROM activity_log ORDER BY id DESC LIMIT ?",
             (limit,),

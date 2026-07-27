@@ -11,7 +11,9 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+from typing import Any
 
+from engine.allocation import BridgedOpportunity
 from engine.bridge import gather_all, load_engine_config
 from engine.mission import build_allocation, render_allocation
 from engine.store import OpportunityHub
@@ -23,12 +25,13 @@ DB_PATH = ROOT / "data" / "datahub.sqlite3"
 ALLOCATIONS_DIR = ROOT / "data" / "allocations"
 
 
-def load_profile() -> dict:
+def load_profile() -> dict[str, Any]:
     with open(PROFILE_PATH) as f:
-        return json.load(f)
+        result: dict[str, Any] = json.load(f)
+        return result
 
 
-def cmd_gather(hub: OpportunityHub) -> dict:
+def cmd_gather(hub: OpportunityHub) -> dict[str, list[BridgedOpportunity]]:
     engines_config = load_engine_config(ENGINES_PATH)
     gathered = gather_all(engines_config)
     for name, items in gathered.items():
