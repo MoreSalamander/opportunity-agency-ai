@@ -33,8 +33,9 @@ background:radial-gradient(ellipse 62% 55% at 50% 42%,transparent 0%,rgba(10,14,
 .ledger{display:flex;gap:20px;justify-content:flex-end;margin-top:12px}
 .led{text-align:right}.led .k{font-size:10px;color:var(--dim);letter-spacing:.16em;text-transform:uppercase}
 .led .v{font-family:var(--disp);font-weight:700;font-size:20px;line-height:1.2}
-.led.earn .v{color:var(--safe)}.led.net.neg .v{color:var(--threat)}.led.net.pos .v{color:var(--safe)}
-.warn{font-size:10.5px;color:var(--faint);letter-spacing:.05em;margin-top:4px;text-align:right}
+.led.earn .v{color:var(--safe)}.led.spend .v{color:var(--threat)}.led.net .v{color:var(--dim)}
+.led .k{max-width:120px}
+.warn{font-size:10.5px;color:var(--faint);letter-spacing:.05em;margin-top:4px;text-align:right;max-width:260px}
 
 .stage{position:absolute;left:0;right:0;bottom:0;z-index:2;display:flex;justify-content:space-between;align-items:flex-end;gap:20px;padding:0 14px 16px;pointer-events:none}
 .stage .panel{width:min(38%,440px);pointer-events:auto}
@@ -98,7 +99,7 @@ td{padding:9px 10px;border-bottom:1px solid rgba(35,48,41,.4);vertical-align:top
     <div class="right">
       <div class="live"><span class="pulse"></span><span id="livetxt">the agency is live</span></div>
       <div class="ledger" id="ledger"></div>
-      <div class="warn">the whole agency must earn more than it spends</div>
+      <div class="warn">spent is money you'd put in if you followed a lead · net is what it costs the agency to run</div>
     </div>
   </div>
 </div>
@@ -261,11 +262,11 @@ function initField(data){
 
 async function loadHero(){
  const st=await j("/api/status");
- const L=st.ledger,neg=L.net<0;
+ const L=st.ledger;
  $("#ledger").innerHTML=
   `<div class="led earn"><div class="k">earned</div><div class="v">$${L.earned.toFixed(2)}</div></div>`+
-  `<div class="led"><div class="k">spent</div><div class="v">$${L.spent.toFixed(2)}</div></div>`+
-  `<div class="led net ${neg?'neg':'pos'}"><div class="k">net</div><div class="v">${neg?'−':'+'}$${Math.abs(L.net).toFixed(2)}</div></div>`;
+  `<div class="led spend"><div class="k">spent · if you follow a lead</div><div class="v">$${L.spent.toFixed(2)}</div></div>`+
+  `<div class="led net"><div class="k">net · cost to run</div><div class="v">$${L.net.toFixed(2)}</div></div>`;
  $("#livetxt").textContent=`the agency is live · ${st.engines.length} engines consulted`;
 
  const T=await j("/api/tonight");
@@ -300,7 +301,7 @@ async function loadDetail(){
    <h4>${e.title}</h4>
    <div class="kv"><span>verified</span><b>${e.counts.verified}</b></div>
    <div class="kv"><span>rejected</span><b>${e.counts.rejected}</b></div>
-   <div class="kv"><span>spent</span><b>$${e.ledger.spent.toFixed(2)}</b></div>
+   <div class="kv"><span>cost to run</span><b>$${e.ledger.net.toFixed(2)}</b></div>
   </div>`).join("");
 
  const leads=await j("/api/leads");

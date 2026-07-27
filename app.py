@@ -32,15 +32,18 @@ def index() -> FileResponse:
 
 @app.get("/api/status")
 def status() -> dict[str, Any]:
-    """The agency-wide ledger: sum of every engine's own earned/spent. Not
-    Opportunity's own spend (it makes no LLM calls yet in v1) — the honest
-    question here is whether the WHOLE agency is worth running."""
+    """The agency-wide ledger: sum of every engine's own earned/spent/net.
+    Three distinct numbers: earned (real payouts), spent (what following a
+    recommended lead would cost the user — out of pocket, not the agency's),
+    and net (what it costs the agency to run — LLM/agent usage cost,
+    independent of whether any lead was ever followed). Not Opportunity's own
+    spend (it makes no LLM calls yet in v1)."""
     hub = OpportunityHub(DB_PATH)
     try:
         record = hub.latest_allocation()
         engines_cfg = load_engine_config(ENGINES_PATH)
         engines = []
-        earned = spent = 0.0
+        earned = spent = net = 0.0
         for name, cfg in engines_cfg.items():
             # Per-engine isolation: read_ledger/read_counts already degrade
             # gracefully on their own most-likely failure (schema mismatch),
@@ -53,10 +56,11 @@ def status() -> dict[str, Any]:
                 counts = read_counts(cfg["repo"])
             except Exception as exc:
                 print(f"[app] failed to read status for engine {name!r}: {exc}")
-                ledger = {"earned": 0.0, "spent": 0.0}
+                ledger = {"earned": 0.0, "spent": 0.0, "net": 0.0}
                 counts = {"verified": 0, "rejected": 0, "candidates": 0}
             earned += ledger["earned"]
             spent += ledger["spent"]
+            net += ledger["net"]
             engines.append({
                 "name": name, "title": cfg["title"], "color": cfg.get("color", "8b98a9"),
                 "counts": counts, "ledger": ledger,
@@ -65,7 +69,7 @@ def status() -> dict[str, Any]:
             "engines": engines,
             "profile": load_profile(),
             "latest": json.loads(record.model_dump_json()) if record else None,
-            "ledger": {"earned": round(earned, 2), "spent": round(spent, 4), "net": round(earned - spent, 2)},
+            "ledger": {"earned": round(earned, 2), "spent": round(spent, 2), "net": round(net, 4)},
         }
     finally:
         hub.close()

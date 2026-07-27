@@ -152,8 +152,19 @@ def gather_all(
 
 
 def read_ledger(repo: str) -> dict[str, float]:
-    """One engine's own earned/spent — read directly, via the same kind of
-    real read-only connection `read_verified`/`read_counts` already use.
+    """One engine's own earned/spent/net — read directly, via the same kind
+    of real read-only connection `read_verified`/`read_counts` already use.
+
+    Three distinct numbers, deliberately not collapsed into one:
+      - earned: real payouts recorded against resolved opportunities.
+      - spent: what following a recommended lead would actually cost you —
+        the sum of `cost_usd_est` for opportunities whose lifecycle shows
+        they were actually acted on (ACTED or RESOLVED). This is money
+        the USER would put in, not the agency.
+      - net: what it costs the agency to run — the LLM/agent usage cost
+        recorded in usage_log, independent of whether any lead was ever
+        followed. This used to be mislabeled "spent"; it's really the
+        agency's own operating cost, not the user's out-of-pocket cost.
 
     This USED to import `hunter_engine.store.DataHub` and call it directly.
     That was a real bug, not just a style choice: `DataHub.__init__` always
@@ -168,20 +179,27 @@ def read_ledger(repo: str) -> dict[str, float]:
     """
     db_path = _datahub_path(repo)
     if not db_path.exists():
-        return {"earned": 0.0, "spent": 0.0}
+        return {"earned": 0.0, "spent": 0.0, "net": 0.0}
     conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
     try:
         earned = 0.0
-        for (spec_json,) in conn.execute("SELECT spec_json FROM opportunities"):
+        spent = 0.0
+        for (spec_json, lifecycle) in conn.execute(
+            "SELECT spec_json, lifecycle FROM opportunities WHERE lifecycle IN ('acted', 'resolved')"
+        ):
             try:
-                payout = (json.loads(spec_json).get("outcome") or {}).get("payout_usd_est")
+                spec = json.loads(spec_json)
+                payout = (spec.get("outcome") or {}).get("payout_usd_est")
                 if payout:
                     earned += float(payout)
+                cost = spec.get("cost_usd_est")
+                if cost:
+                    spent += float(cost)
             except (json.JSONDecodeError, TypeError, ValueError, AttributeError):
                 continue  # one malformed row must not corrupt the whole sum
         row = conn.execute("SELECT COALESCE(SUM(cost_usd_est), 0.0) FROM usage_log").fetchone()
-        spent = float(row[0]) if row is not None else 0.0
-        return {"earned": round(earned, 2), "spent": round(spent, 4)}
+        net = float(row[0]) if row is not None else 0.0
+        return {"earned": round(earned, 2), "spent": round(spent, 2), "net": round(net, 4)}
     except sqlite3.OperationalError as exc:
         # The database exists but doesn't have the expected tables/columns —
         # a genuine schema mismatch between this repo's assumptions and
@@ -189,7 +207,7 @@ def read_ledger(repo: str) -> dict[str, float]:
         # loudly (unlike the old silent-zero paths this audit flagged
         # elsewhere) so a schema drift is visible instead of read as "$0 earned".
         print(f"[bridge] schema mismatch reading ledger from {db_path}: {exc}")
-        return {"earned": 0.0, "spent": 0.0}
+        return {"earned": 0.0, "spent": 0.0, "net": 0.0}
     finally:
         conn.close()
 

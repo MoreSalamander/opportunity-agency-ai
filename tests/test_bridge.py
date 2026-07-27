@@ -17,7 +17,15 @@ from pathlib import Path
 
 import pytest
 from hunter_engine.gate import GateEvidence
-from hunter_engine.spec import Outcome, OpportunitySpec, Scores, Source, SourceKind, TrustStatus
+from hunter_engine.spec import (
+    LifecycleStage,
+    Outcome,
+    OpportunitySpec,
+    Scores,
+    Source,
+    SourceKind,
+    TrustStatus,
+)
 from hunter_engine.store import DataHub
 
 from engine.bridge import (
@@ -43,31 +51,49 @@ def _spec(spec_id: str, **overrides: object) -> OpportunitySpec:
     return OpportunitySpec.model_validate(fields)
 
 
-def _verified(spec_id: str, *, payout_usd_est: float | None = None, scores: Scores | None = None) -> OpportunitySpec:
+def _verified(
+    spec_id: str,
+    *,
+    payout_usd_est: float | None = None,
+    cost_usd_est: float | None = None,
+    acted: bool = False,
+    scores: Scores | None = None,
+) -> OpportunitySpec:
     spec = _spec(
         spec_id,
         trust_status=TrustStatus.VERIFIED,
         verification=[GateEvidence(check="domain_age", passed=True)],
         gate_version="test-v1",
+        cost_usd_est=cost_usd_est,
     )
     if scores is not None:
         spec.scores = scores
     if payout_usd_est is not None:
         spec.outcome = Outcome(payout_usd_est=payout_usd_est, paid=True)
+    if acted:
+        # Mirrors DataHub.record_outcome: acting on a lead moves it out of
+        # GATED into ACTED/RESOLVED — that lifecycle transition, not the
+        # presence of cost_usd_est alone, is what "spent" should key off of.
+        spec.lifecycle = LifecycleStage.RESOLVED if payout_usd_est is not None else LifecycleStage.ACTED
     return spec
 
 
 @pytest.fixture
 def hub_db(tmp_path: Path) -> Path:
-    """A real DataHub-created SQLite file with one verified, one rejected,
-    and one candidate record, plus a usage_log row — the exact shape bridge.py
-    reads from every real Hunter engine repo."""
+    """A real DataHub-created SQLite file: one verified-and-acted-on record
+    (v1 — the only one that should count toward `spent`), one verified but
+    never-followed record (v2 — proves a merely-recommended lead's cost
+    stays out of the ledger), one rejected, and one candidate record, plus a
+    usage_log row — the exact shape bridge.py reads from every real Hunter
+    engine repo."""
     db_path = tmp_path / "datahub.sqlite3"
     hub = DataHub(db_path)
     try:
-        hub.record_verdict(_verified("v1", payout_usd_est=12.5, scores=Scores(
-            reward_potential=30, risk=15, time_efficiency=15, cost=8,
-        )))
+        hub.record_verdict(_verified(
+            "v1", payout_usd_est=12.5, cost_usd_est=5.0, acted=True,
+            scores=Scores(reward_potential=30, risk=15, time_efficiency=15, cost=8),
+        ))
+        hub.record_verdict(_verified("v2", cost_usd_est=40.0, acted=False))
         hub.record_verdict(_spec(
             "r1", trust_status=TrustStatus.REJECTED,
             verification=[GateEvidence(check="domain_age", passed=False)],
@@ -104,15 +130,18 @@ def test_read_only_connections_reject_writes(tmp_path: Path, hub_db: Path) -> No
         conn.close()
 
 
-def test_read_ledger_sums_payouts_and_costs(tmp_path: Path, hub_db: Path) -> None:
+def test_read_ledger_reports_earned_spent_and_net_separately(tmp_path: Path, hub_db: Path) -> None:
+    """earned = real payouts; spent = cost of the lead actually followed
+    (v1's $5, NOT v2's $40 — v2 was only ever recommended, never acted on);
+    net = the agency's own LLM/usage cost, independent of either."""
     repo = _repo_dir_for(tmp_path, hub_db)
     ledger = read_ledger(repo)
-    assert ledger == {"earned": 12.5, "spent": 3.25}
+    assert ledger == {"earned": 12.5, "spent": 5.0, "net": 3.25}
 
 
 def test_read_ledger_missing_db_returns_zeroed_result(tmp_path: Path) -> None:
     ledger = read_ledger(str(tmp_path / "never_ran"))
-    assert ledger == {"earned": 0.0, "spent": 0.0}
+    assert ledger == {"earned": 0.0, "spent": 0.0, "net": 0.0}
 
 
 def test_read_ledger_degrades_on_schema_mismatch(tmp_path: Path) -> None:
@@ -124,13 +153,13 @@ def test_read_ledger_degrades_on_schema_mismatch(tmp_path: Path) -> None:
     conn.commit()
     conn.close()
     ledger = read_ledger(str(repo))
-    assert ledger == {"earned": 0.0, "spent": 0.0}
+    assert ledger == {"earned": 0.0, "spent": 0.0, "net": 0.0}
 
 
 def test_read_counts_reports_all_three_trust_statuses(tmp_path: Path, hub_db: Path) -> None:
     repo = _repo_dir_for(tmp_path, hub_db)
     counts = read_counts(repo)
-    assert counts == {"verified": 1, "rejected": 1, "candidates": 1}
+    assert counts == {"verified": 2, "rejected": 1, "candidates": 1}
 
 
 def test_read_counts_missing_db_returns_zeroed_result(tmp_path: Path) -> None:
@@ -140,10 +169,10 @@ def test_read_counts_missing_db_returns_zeroed_result(tmp_path: Path) -> None:
 def test_read_verified_returns_only_verified_records(tmp_path: Path, hub_db: Path) -> None:
     repo = _repo_dir_for(tmp_path, hub_db)
     out = read_verified("crypto_hunter", repo)
-    assert len(out) == 1
-    assert out[0].opportunity_id == "v1"
-    assert out[0].engine == "crypto_hunter"
-    assert out[0].score_total == 30 + 15 + 15 + 8
+    assert {o.opportunity_id for o in out} == {"v1", "v2"}
+    assert all(o.engine == "crypto_hunter" for o in out)
+    v1 = next(o for o in out if o.opportunity_id == "v1")
+    assert v1.score_total == 30 + 15 + 15 + 8
 
 
 def test_read_verified_missing_db_returns_empty_list(tmp_path: Path) -> None:
@@ -163,7 +192,7 @@ def test_read_verified_skips_malformed_rows_without_failing(tmp_path: Path, hub_
     conn.commit()
     conn.close()
     out = read_verified("crypto_hunter", repo)
-    assert [o.opportunity_id for o in out] == ["v1"]
+    assert {o.opportunity_id for o in out} == {"v1", "v2"}
 
 
 def test_gather_all_isolates_a_failing_engine(tmp_path: Path, hub_db: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -186,7 +215,7 @@ def test_gather_all_isolates_a_failing_engine(tmp_path: Path, hub_db: Path, monk
 
     monkeypatch.setattr(bridge_mod, "read_verified", flaky_read_verified)
     out = gather_all(engines_config)
-    assert len(out["good_engine"]) == 1
+    assert len(out["good_engine"]) == 2
     assert out["broken_engine"] == []
 
 
