@@ -64,6 +64,10 @@ def status() -> dict[str, Any]:
             engines.append({
                 "name": name, "title": cfg["title"], "color": cfg.get("color", "8b98a9"),
                 "counts": counts, "ledger": ledger,
+                # The engine's own live app — the next doll down. Each engine
+                # is a real standalone production; its card should open it,
+                # the same way the Entropy shell's cards open Opportunity.
+                "url": cfg.get("url"),
             })
         return {
             "engines": engines,

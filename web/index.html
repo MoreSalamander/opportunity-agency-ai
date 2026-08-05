@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Opportunity [Agency AI] — part of Entropy AI</title>
+<title>Opportunity [Agency AI] — part of Entropy OS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -95,7 +95,7 @@ td{padding:9px 10px;border-bottom:1px solid rgba(35,48,41,.4);vertical-align:top
 
 <div class="app">
   <div class="top">
-    <div><div class="tag" style="color:var(--gold);letter-spacing:.32em;margin-bottom:4px">ENTROPY AI</div><div class="mark">OPPORTUNITY<b>/</b>AGENCY</div><div class="tag">cross-engine arbitration</div></div>
+    <div><div class="tag" style="color:var(--gold);letter-spacing:.32em;margin-bottom:4px">ENTROPY OS</div><div class="mark">OPPORTUNITY<b>/</b>AGENCY</div><div class="tag">cross-engine arbitration</div></div>
     <div class="right">
       <div class="live"><span class="pulse"></span><span id="livetxt">the agency is live</span></div>
       <div class="ledger" id="ledger"></div>
@@ -121,7 +121,7 @@ td{padding:9px 10px;border-bottom:1px solid rgba(35,48,41,.4);vertical-align:top
   <div class="sec" id="sec-skipped"><div class="hd"><h2>Left out</h2><span class="sub">legitimate, just not today</span><span class="cnt" id="cnt-skipped"></span><span class="chev">▸</span></div>
     <div class="body"><div id="skipped"></div></div></div>
 
-  <div class="foot">PART OF ENTROPY AI · ARBITRATES PRIORITY, NOT TRUTH · NEVER HOLDS KEYS · NEVER FILES OR EXECUTES ANYTHING · EVERY PICK ALREADY PASSED ITS OWN ENGINE'S GATE</div>
+  <div class="foot">PART OF ENTROPY OS · ARBITRATES PRIORITY, NOT TRUTH · NEVER HOLDS KEYS · NEVER FILES OR EXECUTES ANYTHING · EVERY PICK ALREADY PASSED ITS OWN ENGINE'S GATE</div>
 </div></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -296,13 +296,18 @@ function capped(items, cap, render, container, noun){
 async function loadDetail(){
  const st=await j("/api/status");
  $("#cnt-engines").textContent=`${st.engines.length} engines`;
- $("#engines").innerHTML=st.engines.map(e=>`
-  <div class="card" style="--c:#${e.color}">
-   <h4>${e.title}</h4>
+ // Each engine card opens the engine's own live app — the next doll down
+ // (Entropy OS -> Opportunity -> engine -> its agents' scanfield).
+ $("#engines").innerHTML=st.engines.map(e=>{
+  const inner=`
+   <h4>${e.title}${e.url?' <span style="opacity:.6;font-size:.8em">↗</span>':''}</h4>
    <div class="kv"><span>verified</span><b>${e.counts.verified}</b></div>
    <div class="kv"><span>rejected</span><b>${e.counts.rejected}</b></div>
-   <div class="kv"><span>cost to run</span><b>$${e.ledger.net.toFixed(2)}</b></div>
-  </div>`).join("");
+   <div class="kv"><span>cost to run</span><b>$${e.ledger.net.toFixed(2)}</b></div>`;
+  return e.url
+   ?`<a class="card" style="--c:#${e.color};display:block;text-decoration:none;color:inherit" href="${e.url}" target="_blank" rel="noopener">${inner}</a>`
+   :`<div class="card" style="--c:#${e.color}">${inner}</div>`;
+ }).join("");
 
  const leads=await j("/api/leads");
  leads.sort((a,b)=>(b.score??-1)-(a.score??-1));

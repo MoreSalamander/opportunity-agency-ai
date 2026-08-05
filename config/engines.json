@@ -2,16 +2,19 @@
   "crypto_hunter": {
     "title": "Crypto Hunter AI",
     "repo": "~/MoreSalamander/crypto-hunter",
-    "color": "ffb454"
+    "color": "ffb454",
+    "url": "http://localhost:8010"
   },
   "collectible_hunter": {
     "title": "Collectible Hunter AI",
     "repo": "~/MoreSalamander/collectible-hunter",
-    "color": "d4af37"
+    "color": "d4af37",
+    "url": "http://localhost:8013"
   },
   "free_money_hunter": {
     "title": "Free Money Hunter AI",
     "repo": "~/MoreSalamander/free-money-hunter",
-    "color": "4ade80"
+    "color": "4ade80",
+    "url": "http://localhost:8014"
   }
 }
