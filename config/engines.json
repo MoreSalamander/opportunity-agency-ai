@@ -16,5 +16,11 @@
     "repo": "~/MoreSalamander/free-money-hunter",
     "color": "4ade80",
     "url": "http://localhost:8014"
+  },
+  "hackathon_hunter": {
+    "title": "Hackathon Hunter AI",
+    "repo": "~/MoreSalamander/hackathon-hunter",
+    "color": "e85c5c",
+    "url": "http://localhost:8016"
   }
 }
